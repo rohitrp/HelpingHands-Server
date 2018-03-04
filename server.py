@@ -2,6 +2,7 @@ from flask import Flask, request
 from flask_restful import Resource, Api
 from pymongo import MongoClient
 import geopy.distance
+from gcm import *
 
 app = Flask(__name__)
 api = Api(app)
@@ -37,13 +38,22 @@ class AmbulanceGps(Resource):
 
         drivers = driversCollection.find({})
 
+        nearbyDriversIID = []
         for driver in drivers:
             driverLat = float(driver['GPS']['lat'])
             driverLong = float(driver['GPS']['long'])
 
             dist = geopy.distance.vincenty((latitude, longitude), (driverLat, driverLong)).km
-            print(dist)
             
+            # Check if distance is less than 5 kms
+            if (dist < 400):
+                nearbyDriversIID += [driver['IID']]
+
+        print(nearbyDriversIID)
+        gcm = GCM("AIzaSyAzclIVV1T7AI_tS2_Uhxrq3cK1zde33E8")
+        response = gcm.json_request(registration_ids=nearbyDriversIID,data ={'msg': "Happy Birthday!"})
+        print(response)
+
 class UpdateIid(Resource):
     def post(self):
         """
