@@ -17,7 +17,7 @@ class UpdateIid(Resource):
         drivers = db.drivers
         drivers.update(
             {'userID': data['userID']},
-            {'$set': {'IID': data['IID']}})
+            {'$set': {'IID': data['IID']}}, upsert=True)
         
 
 class DriverGps(Resource):
