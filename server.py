@@ -10,20 +10,38 @@ db = client['helping-hands']
 class UpdateIid(Resource):
     def post(self):
         """
-        Assumes the post data to contain two fields:
+        Assumes the POST data to contain two fields:
         userID, and IID
         """
         data = request.get_json(force=True)
-        drivers = db.drivers
-        drivers.update(
+        driversCollection = db.drivers
+        driversCollection.update(
             {'userID': data['userID']},
-            {'$set': {'IID': data['IID']}}, upsert=True)
+            {'$set': {'IID': data['IID']}}, 
+            upsert=True
+        )
         
 
 class DriverGps(Resource):
     def post(self):
-        args = request.get_json(force=True)
-        print(args)
+        """
+        Assumes the POST data to contain two fields:
+        userID, GPS
+        """
+        data = request.get_json(force=True)
+        latitude, longitude = data['GPS'].split(',')
+        print(latitude, longitude)
+        driversCollection = db.drivers
+        driversCollection.update(
+            {'userID': data['userID']},
+            {'$set': 
+                {'GPS': {
+                    'lat': latitude,
+                    'long': longitude
+                }}
+            }
+        )
+        print(data)
 
 api.add_resource(DriverGps, '/driver/gps')
 api.add_resource(UpdateIid, '/driver/updateIid')
