@@ -7,6 +7,29 @@ api = Api(app)
 client = MongoClient('localhost', 27017)
 db = client['helping-hands']
 
+class AmbulanceGps(Resource):
+    def post(self):
+        """
+        Assumes the POST data to contain two fields:
+        userID, and IID
+        """
+        data = request.get_json(force=True)
+        latitude, longitude = data['GPS'].split(',')
+
+        ambulanceDriversCollection = db.ambulanceDrivers
+        ambulanceDriversCollection.update(
+            {'userID': data['userID']},
+            {'$set': {
+                'GPS': {
+                    'lat': latitude,
+                    'long': longitude
+                }        
+            }},
+            upsert=True
+        )
+
+        #TODO: find all drivers withing 1 KM of ambulance's location        
+
 class UpdateIid(Resource):
     def post(self):
         """
@@ -19,8 +42,7 @@ class UpdateIid(Resource):
             {'userID': data['userID']},
             {'$set': {'IID': data['IID']}}, 
             upsert=True
-        )
-        
+        )        
 
 class DriverGps(Resource):
     def post(self):
@@ -30,7 +52,7 @@ class DriverGps(Resource):
         """
         data = request.get_json(force=True)
         latitude, longitude = data['GPS'].split(',')
-        print(latitude, longitude)
+
         driversCollection = db.drivers
         driversCollection.update(
             {'userID': data['userID']},
@@ -41,10 +63,10 @@ class DriverGps(Resource):
                 }}
             }
         )
-        print(data)
 
 api.add_resource(DriverGps, '/driver/gps')
 api.add_resource(UpdateIid, '/driver/updateIid')
+api.add_resource(AmbulanceGps, '/ambulance/gps')
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
