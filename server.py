@@ -30,7 +30,20 @@ class AmbulanceGps(Resource):
         )
 
         #TODO: find all drivers withing 1 KM of ambulance's location        
+        latitude = float(latitude)
+        longitude = float(longitude)
         
+        driversCollection = db.drivers
+
+        drivers = driversCollection.find({})
+
+        for driver in drivers:
+            driverLat = float(driver['GPS']['lat'])
+            driverLong = float(driver['GPS']['long'])
+
+            dist = geopy.distance.vincenty((latitude, longitude), (driverLat, driverLong)).km
+            print(dist)
+            
 class UpdateIid(Resource):
     def post(self):
         """
