@@ -1,6 +1,7 @@
 from flask import Flask, request
 from flask_restful import Resource, Api
 from pymongo import MongoClient
+import geopy.distance
 
 app = Flask(__name__)
 api = Api(app)
@@ -29,7 +30,7 @@ class AmbulanceGps(Resource):
         )
 
         #TODO: find all drivers withing 1 KM of ambulance's location        
-
+        
 class UpdateIid(Resource):
     def post(self):
         """
@@ -61,7 +62,8 @@ class DriverGps(Resource):
                     'lat': latitude,
                     'long': longitude
                 }}
-            }
+            },
+            upsert=True
         )
 
 api.add_resource(DriverGps, '/driver/gps')
