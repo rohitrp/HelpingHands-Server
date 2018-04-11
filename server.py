@@ -27,6 +27,11 @@ class AmbulanceGps(Resource):
         userID, and IID
         """
         data = request.get_json(force=True)
+
+        print(data)
+        if data['GPS'] in 'null':
+            return
+
         latitude, longitude = data['GPS'].split(',')
 
         ambulanceDriversCollection = db.ambulanceDrivers
@@ -60,6 +65,7 @@ class AmbulanceGps(Resource):
             if (dist < 400):
                 nearbyDriversIID += [driver['IID']]
 
+        print("ROHIT")
         print(nearbyDriversIID)
         gcm = GCM("AIzaSyAzclIVV1T7AI_tS2_Uhxrq3cK1zde33E8")
         response = gcm.json_request(registration_ids=nearbyDriversIID,data ={'msg': "Happy Birthday!"})
@@ -87,6 +93,10 @@ class DriverGps(Resource):
         userID, GPS
         """
         data = request.get_json(force=True)
+
+        if data['GPS'] in 'null':
+            return
+
         latitude, longitude = data['GPS'].split(',')
 
         driversCollection = db.drivers
@@ -124,9 +134,9 @@ class IsAmbulance(Resource):
         prediction = svm_classifier.predict(x_test)
         print (prediction)
         if prediction[0] == 0:
-            self.write({"result":"no"})
+            return {"result":"no"}
         else:
-            self.write({"result":"yes"})
+            return {"result":"yes"}
 
 api.add_resource(DriverGps, '/driver/gps')
 api.add_resource(UpdateIid, '/driver/updateIid')
