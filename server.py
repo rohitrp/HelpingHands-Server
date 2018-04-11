@@ -4,6 +4,17 @@ from pymongo import MongoClient
 import geopy.distance
 from gcm import *
 
+import base64
+import subprocess
+from python_speech_features import mfcc
+import scipy.io.wavfile as wav
+import os
+import numpy as np
+from sklearn import svm
+from sklearn.utils import shuffle
+import pickle
+
+
 app = Flask(__name__)
 api = Api(app)
 client = MongoClient('localhost', 27017)
@@ -61,6 +72,7 @@ class UpdateIid(Resource):
         userID, and IID
         """
         data = request.get_json(force=True)
+        print(data)
         driversCollection = db.drivers
         driversCollection.update(
             {'userID': data['userID']},
@@ -89,9 +101,37 @@ class DriverGps(Resource):
             upsert=True
         )
 
+class IsAmbulance(Resource):
+    def post(self):
+        data = request.get_json(force=True)
+        imgdata = base64.b64decode(data["audio"])
+
+        with open(r"src/tmp.3gp", 'wb') as f:
+            f.write(imgdata)
+
+        command = "ffmpeg -y -i ./src/tmp.3gp -ab 160k -ac 2 -ar 44100 -vn ./src/audio.wav"
+
+        subprocess.call(command, shell=True)
+
+        filename = './src/classifier.sav'
+        svm_classifier = pickle.load(open(filename, 'rb'))
+
+        (rate, sig) = wav.read(r"src/audio.wav")
+        mfcc_feat = mfcc(sig, rate)
+        x_test = []
+        x_test.append(np.mean(mfcc_feat, axis=0))
+        x_test = np.array(x_test)
+        prediction = svm_classifier.predict(x_test)
+        print (prediction)
+        if prediction[0] == 0:
+            self.write({"result":"no"})
+        else:
+            self.write({"result":"yes"})
+
 api.add_resource(DriverGps, '/driver/gps')
 api.add_resource(UpdateIid, '/driver/updateIid')
 api.add_resource(AmbulanceGps, '/ambulance/gps')
+api.add_resource(IsAmbulance, '/isambulance')
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
